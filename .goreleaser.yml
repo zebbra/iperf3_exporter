@@ -6,9 +6,9 @@ before:
     - go mod download
 
 builds:
-  -
-    env:
+  - env:
       - CGO_ENABLED=0
+    binary: iperf3_exporter
     goos:
       - linux
     goarch:
