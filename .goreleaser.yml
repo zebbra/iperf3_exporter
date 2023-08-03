@@ -11,14 +11,9 @@ builds:
       - CGO_ENABLED=0
     goos:
       - linux
-      - freebsd
-      - openbsd
-      - netbsd
-      - darwin
-      - windows
     goarch:
-      - 386
       - amd64
+      - arm64
     ldflags:
       - -s -w -X github.com/prometheus/common/version.Version={{.Version}} -X github.com/prometheus/common/version.BuildDate="{{.Date}}" -X github.com/prometheus/common/version.Branch={{.Tag}} -X github.com/prometheus/common/version.Revision={{.FullCommit}} -X github.com/prometheus/common/version.BuildUser="{{.Env.USER}}"
 
@@ -26,9 +21,6 @@ archives:
   -
     name_template: '{{ .ProjectName }}-{{ .Version }}.{{ .Os }}-{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
     wrap_in_directory: true
-    format_overrides:
-      - goos: windows
-        format: zip
     files:
       - LICENSE
       - NOTICE
@@ -47,15 +39,40 @@ changelog:
     - Merge branch
 
 dockers:
-  -
+  - dockerfile: Dockerfile
+    use: buildx
+    build_flag_templates:
+      - "--platform=linux/amd64"
+      - "--pull"
+      - '--label=org.label-schema.schema-version=1.0'
+      - '--label=org.label-schema.version={{.Version}}'
+      - '--label=org.label-schema.name={{.ProjectName}}'
+    image_templates:
+      - 'ghcr.io/zebbra/iperf3-exporter:{{ .Tag }}-amd64'
     goos: linux
     goarch: amd64
-
-    image_templates:
-      - 'edgard/iperf3-exporter:{{ .Tag }}'
-      - 'edgard/iperf3-exporter:latest'
-
+    ids:
+      - iperf3-exporter
+  - dockerfile: Dockerfile
+    use: buildx
     build_flag_templates:
-    - '--label=org.label-schema.schema-version=1.0'
-    - '--label=org.label-schema.version={{.Version}}'
-    - '--label=org.label-schema.name={{.ProjectName}}'
+      - "--platform=linux/arm64"
+      - "--pull"
+      - '--label=org.label-schema.schema-version=1.0'
+      - '--label=org.label-schema.version={{.Version}}'
+      - '--label=org.label-schema.name={{.ProjectName}}'
+    image_templates:
+      - 'ghcr.io/zebbra/iperf3-exporter:{{ .Tag }}-arm64'
+    goos: linux
+    goarch: arm64
+    ids:
+      - iperf3-exporter
+docker_manifests:
+  - name_template: ghcr.io/zebbra/iperf3-exporter:{{ .Tag }}
+    image_templates:
+      - "ghcr.io/zebbra/iperf3-exporter:{{ .Tag }}-amd64"
+      - "ghcr.io/zebbra/iperf3-exporter:{{ .Tag }}-arm64"
+  - name_template: ghcr.io/zebbra/iperf3-exporter:latest
+    image_templates:
+      - "ghcr.io/zebbra/iperf3-exporter:{{ .Tag }}-amd64"
+      - "ghcr.io/zebbra/iperf3-exporter:{{ .Tag }}-arm64"
